@@ -17,54 +17,49 @@ Papa.parse(file, {
     const newData = results.data.map(obj => {
 
       // splits start date string to use for moment.js
-      let date = obj['Start Date & Time'].split(' ')
-      // console.log(date[1].concat(date[2]))
+      const currDate = obj['Start Date & Time'].split(' ')
+      const time = Moment(currDate[1].concat(currDate[2]), 'hh:mm a').format('h:mmA');
+      const timeZone = obj['Invitee Time Zone'].replace(' - US & Canada', '')
       // creates return object for new array
       return {
         firstName: obj['Invitee First Name'],
         email: obj['Invitee Email'],
-        timeZone: obj['Invitee Time Zone'].replace(' - US & Canada', ''),
-        start: function checkTimeZone() {
-
-         let dateObj = {
-           date: '',
-           time: ''
-         }
-
-          if(this.timeZone == 'Central Time'){
-            // -1 from time
-              // format date to dddd MMMM do YYYY
-            dateObj.date = Moment(date[0].replace('-','').replace('-',''), "YYYYMMDD").format('dddd, MMMM do, YYYY'),
-            dateObj.time = Moment(date[1].concat(date[2]), 'hh:mm a').format('h:mmA');
-            
-          } else if(this.timeZone == "Mountain Time") {
-            // -2 from time
-              // format date to dddd MMMM do YYYY
-            dateObj.date = Moment(date[0].replace('-','').replace('-',''), "YYYYMMDD").format('dddd, MMMM do, YYYY'),
-            dateObj.time = date[1].concat(date[2])
-            
-          } else if(this.timeZone == "Eastern Time") {
-            // time stays the same
-              // format date to dddd MMMM do YYYY
-            dateObj.date = Moment(date[0].replace('-','').replace('-',''), "YYYYMMDD").format('dddd, MMMM do, YYYY'),
-            dateObj.time = date[1].concat(date[2])
-          
-          } else {
-            console.log('there is no time zone')
-          }
-
-          return dateObj;
-        }
+        timeZone: timeZone,
+        date: Moment(currDate[0].replace('-', '').replace('-', ''), "YYYYMMDD").format('dddd, MMMM Do, YYYY'),
+        // changes time for student timezones
+        time: checkTimeZone(timeZone, time)
       }
     })
     csvData = newData;
 
-    console.log(Moment(csvData[0].start().time,'hh:mma').add(2, 'hours').format('hh:mma'))
+    console.log(csvData)
 
   }
 });
 
+function checkTimeZone(timeZone, time) {
 
+  if (timeZone == 'Central Time') {
+    // -1 from time
+    let newTime = Moment(time, 'hh:mma').subtract(1, 'hours').format('h:mma')
+    return newTime + ' CST';
+
+  } else if (timeZone == "Mountain Time") {
+    // -2 from time 
+    let newTime = Moment(time, 'hh:mma').subtract(2, 'hours').format('h:mma');
+    return newTime + ' MT';
+
+  } else if (timeZone == "Eastern Time") {
+    // time stays the same
+    let newTime = time;
+    //let newTime = Moment(time, 'hh:mma').format('hh:mma')
+    return time + ' EST'
+
+  } else {
+    console.log('there is no time zone')
+    return
+  }
+}
 
 // parse date string. moment? 
 // if timeZone === 'mountain time' -2 hours from time
